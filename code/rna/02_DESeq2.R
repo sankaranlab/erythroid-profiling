@@ -44,7 +44,7 @@ all.pairwise <- function(x) {
    
   # Output table
   write.table(out[,c("gene", "baseMean", "log2FoldChange", "pvalue", "padj")],
-              file = paste0("../../downloads/RNA_DESeq2/RNAseq-", comp[x,4], "_Padj01.tsv", sep = "\t"), 
+              file = paste0("../../downloads/RNA_DESeq2/RNAseq-", comp[x,4], "_Padj01.tsv"), 
               row.names = FALSE, col.names = TRUE, sep = "\t", quote = FALSE)
   comp[x,4]
   
