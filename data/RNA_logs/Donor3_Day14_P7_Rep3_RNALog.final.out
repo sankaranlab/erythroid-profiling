@@ -1,33 +1,33 @@
-                                 Started job on |	Jun 08 19:27:57
-                             Started mapping on |	Jun 08 20:00:01
-                                    Finished on |	Jun 08 20:32:02
-       Mapping speed, Million of reads per hour |	87.98
+                                 Started job on |	Jun 09 14:20:07
+                             Started mapping on |	Jun 09 14:29:27
+                                    Finished on |	Jun 09 14:38:32
+       Mapping speed, Million of reads per hour |	325.64
 
-                          Number of input reads |	46949167
+                          Number of input reads |	49297570
                       Average input read length |	76
                                     UNIQUE READS:
-                   Uniquely mapped reads number |	36082678
-                        Uniquely mapped reads % |	76.85%
-                          Average mapped length |	75.13
-                       Number of splices: Total |	9603176
-            Number of splices: Annotated (sjdb) |	9583063
-                       Number of splices: GT/AG |	9516429
-                       Number of splices: GC/AG |	62822
-                       Number of splices: AT/AC |	9106
-               Number of splices: Non-canonical |	14819
-                      Mismatch rate per base, % |	0.28%
+                   Uniquely mapped reads number |	27688008
+                        Uniquely mapped reads % |	56.17%
+                          Average mapped length |	75.17
+                       Number of splices: Total |	4899259
+            Number of splices: Annotated (sjdb) |	4883808
+                       Number of splices: GT/AG |	4847028
+                       Number of splices: GC/AG |	35618
+                       Number of splices: AT/AC |	4962
+               Number of splices: Non-canonical |	11651
+                      Mismatch rate per base, % |	0.31%
                          Deletion rate per base |	0.01%
-                        Deletion average length |	1.15
+                        Deletion average length |	1.17
                         Insertion rate per base |	0.02%
-                       Insertion average length |	1.03
+                       Insertion average length |	1.02
                              MULTI-MAPPING READS:
         Number of reads mapped to multiple loci |	0
              % of reads mapped to multiple loci |	0.00%
-        Number of reads mapped to too many loci |	8718033
-             % of reads mapped to too many loci |	18.57%
+        Number of reads mapped to too many loci |	18184356
+             % of reads mapped to too many loci |	36.89%
                                   UNMAPPED READS:
        % of reads unmapped: too many mismatches |	0.00%
-                 % of reads unmapped: too short |	4.49%
+                 % of reads unmapped: too short |	6.85%
                      % of reads unmapped: other |	0.09%
                                   CHIMERIC READS:
                        Number of chimeric reads |	0

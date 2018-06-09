@@ -23,7 +23,7 @@ colnames(RNA.counts) <- samplenames
 RNA.counts <- data.frame(RNA.counts)
 qcRNA$ReadsAssignedToGenes <- colSums(RNA.counts)[qcRNA$Sample]
 
-RNA.counts$genes <- make.unique(read.table("../../data/genes.tsv")[,2])
+RNA.counts$genes <- make.unique(read.table("../../data/genes.tsv", stringsAsFactors = FALSE)[,2])
 
 # Polish
 qcRNA$PercentReadsInGenes <- round(as.numeric(as.character(qcRNA$ReadsAssignedToGenes))/as.numeric(as.character(qcRNA$TotalReads)) * 100, 1)
