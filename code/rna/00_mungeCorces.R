@@ -12,13 +12,11 @@ RNA.counts <- data.frame(RNA.counts)
 
 # Import mapping / translate SRR files
 mapdf <- read.table("../../data/corces/RNAseq_Corces.txt", sep = "\t")
-mapvec <- make.unique(as.character(mapdf[,2])); names(mapvec) <- as.character(mapdf[,1])
-colnames(RNA.counts) <- mapvec[as.character(colnames(RNA.counts))]
+mapvec <- as.character(mapdf[,2]); names(mapvec) <- as.character(mapdf[,1])
 
-RNA.counts$genes <- make.unique(read.table("../../data/genes.tsv", stringsAsFactors = FALSE)[,2])
+df <- data.frame(fread("../../processed/RNAseq_rawGeneCounts.tsv"))
 
-# Polish
-qcRNA$PercentReadsInGenes <- round(as.numeric(as.character(qcRNA$ReadsAssignedToGenes))/as.numeric(as.character(qcRNA$TotalReads)) * 100, 1)
-write.table(qcRNA, file = "../../downloads/RNAseq_QC.tsv", sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
+RNA.counts.all <- cbind(RNA.counts, df)
+celltype <- c(mapvec[colnames(RNA.counts)], stringr::str_split_fixed(colnames(df), "_", 4)[1:28,3])
 
-write.table(RNA.counts, file = "../../processed/RNAseq_rawGeneCounts.tsv", sep = "\t", quote = FALSE, row.names = FALSE, col.names = TRUE)
+save(RNA.counts.all, celltype, file = "../../processed/serialized/RNAseq_wCorces.rda")
