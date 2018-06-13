@@ -16,6 +16,7 @@ load("../../processed/serialized/RNAseq_wCorces.rda")
 
 # PCA setup
 RNA.counts <- data.matrix(RNA.counts.all[,c(1:44)])
+RNA.counts <- RNA.counts[RNA.counts.all[,45] %in% symbol_keep,]
 cpm <- sweep(RNA.counts, 2, colSums(RNA.counts), FUN="/") * 1000000
 log2cpm <- log2(cpm + 1)
 print(dim(log2cpm))
@@ -24,6 +25,8 @@ log2cpm_z <- sapply(1:dim(log2cpm)[1],function(i){
   x <- data.matrix(log2cpm)[i,]
   (x - mean(x))/sd(x)
 }) %>% t()
+
+# Verify that genes aren't NAs
 log2cpm_z <- log2cpm_z[rowSums(is.finite(log2cpm_z)) == 44,]
 pr_rna <- prcomp_irlba(log2cpm_z, n = 3, center = TRUE)
 PCA_RNA <- data.frame(pr_rna$rotation, Population = celltype)
