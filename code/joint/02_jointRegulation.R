@@ -52,7 +52,7 @@ alltogether <- merge(gene_enh, gene_max)
 alltogether %>% group_by(maxPopRNA, maxPopATAC) %>% summarise(count = n()) %>% data.frame() -> quants
 
 ggplot(quants, aes(x = maxPopRNA, y = maxPopATAC, fill = count)) + geom_tile() + pretty_plot() + 
-  scale_fill_gradientn(colors = jdb_palette("solar_rojos")) +
+  scale_fill_gradientn(colors = jdb_palette("solar_rojos")) 
 #  geom_abline(slope=-1, intercept = 9, linetype = 2)  + labs(x = "", y = "") + theme(legend.position = "none")
 
 
