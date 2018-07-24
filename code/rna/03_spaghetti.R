@@ -17,15 +17,24 @@ differentialGenes <- unique(as.character(diffGeneDf[,1]))
 
 go <- allFC[as.character(allFC$gene) %in% differentialGenes, ]
 
-go <- rbind(go, data.frame(gene = unique(as.character(go$gene)), log2FoldChange = 0, timepoint = "P1"))
-go$interesting <- ifelse(go$gene == "TMCC2", "TMCC2", "zznone")
-go <- arrange(go, desc(interesting))
-go$gene <- factor(as.character(go$gene), levels = unique(as.character(go$gene)))
+makePlot <- function(geneP){
+  go <- rbind(go, data.frame(gene = unique(as.character(go$gene)), log2FoldChange = 0, timepoint = "P1"))
+  go$interesting <- ifelse(go$gene == geneP, geneP, "zznone")
+  go <- arrange(go, desc(interesting))
+  go$gene <- factor(as.character(go$gene), levels = unique(as.character(go$gene)))
+  
+  colorVec <- c("firebrick", "grey"); names(colorVec) <- c(geneP,  "zznone")
+  p1 <- ggplot(go, aes(x = timepoint, y = log2FoldChange*-1, group = gene, color = interesting)) +
+    pretty_plot(fontsize = 8) +
+    geom_line(size = 0.25) + scale_color_manual(values = colorVec) + L_border() +
+    labs(x = "", y = "log2FC over P1") + theme(legend.position = "none")
+  
+  cowplot::ggsave(p1, file = paste0("../../plots/spaghetti-",geneP,".pdf"), width = 3, height = 2)
+  
+}
+makePlot("TMCC2")
+makePlot("GATA1")
+makePlot("IRF1")
+makePlot("GFI1B")
 
-p1 <- ggplot(go, aes(x = timepoint, y = log2FoldChange*-1, group = gene, color = interesting)) +
-  pretty_plot(fontsize = 8) +
-  geom_line(size = 0.25) + scale_color_manual(values = c("TMCC2" = "firebrick", "zznone" = "grey")) + L_border() +
-  labs(x = "", y = "log2FC over P1") + theme(legend.position = "none")
-
-cowplot::ggsave(p1, file = "../../plots/spaghetti.pdf", width = 3, height = 2)
 
