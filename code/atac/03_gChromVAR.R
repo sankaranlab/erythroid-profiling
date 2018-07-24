@@ -16,7 +16,7 @@ library(stringr)
 
 
 # Import and run run run 
-peaksdf <- fread("../../data/corces/atac_combinedPopulations/panHeme.bed")
+peaksdf <- fread("../../data/corces/panHeme.bed")
 peaks <- makeGRangesFromDataFrame(peaksdf, seqnames = "V1", start.field = "V2", end.field = "V3")
 counts <-  data.matrix(data.frame(fread("../../data/corces/atac_combinedPopulations/panHeme.counts.tsv")))
 
@@ -35,10 +35,10 @@ rownames(outdf) <- gsub("_PP001_betas", "", rownames(outdf))
 mdf <- reshape2::melt(outdf)
 mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8))))
 
-p1 <- ggplot(mdf[mdf$Var1 %in% c( "HGB", "RBC_COUNT", "MPV") , ],
+ggplot(mdf[mdf$Var1 %in% c( "HGB", "RBC_COUNT","PLT_COUNT") , ],
              aes(x = Var2, y = value, color = Var1, group = Var1)) +
   geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
-   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "none") 
+   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
 
 ggsave(p1, filename = "../../plots/gchromVAR_selected.pdf", width = 3.5, height = 1.5)
 
