@@ -35,7 +35,8 @@ rownames(outdf) <- gsub("_PP001_betas", "", rownames(outdf))
 mdf <- reshape2::melt(outdf)
 mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8))))
 
-ggplot(mdf[mdf$Var1 %in% c( "HGB", "RBC_COUNT","PLT_COUNT") , ],
+ggplot(mdf[mdf$Var1 %in% c( "HGB", "MCV", "MCH", "MCHC", "RETIC_COUNT",
+                            "MEAN_RETIC_VOL", "RBC_COUNT","PLT_COUNT") , ],
              aes(x = Var2, y = value, color = Var1, group = Var1)) +
   geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
    labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
