@@ -80,6 +80,7 @@ all.pairwise.P1 <- function(x) {
 }
 
 dumb <- lapply(1:7, all.pairwise.P1)
+dumb <- lapply(which(comp$Var1 == "P8"), all.pairwise.P1)
 
 
 dim(comp)
