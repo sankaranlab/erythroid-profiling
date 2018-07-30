@@ -38,6 +38,9 @@ RNAseq_counts <- sapply(c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1
 RNA.cpm <- round(sweep(RNAseq_counts, 2, colSums(RNAseq_counts), FUN="/") * 1000000, 1)
 RNA.cpm.log2 <- log2(RNA.cpm+1)
 
+# Exclude P1
+RNA.cpm.log2 <- RNA.cpm.log2[,!(colnames(RNA.cpm.log2) == "P1")]
+ATAC.cpm.log2 <- ATAC.cpm.log2[,!(colnames(ATAC.cpm.log2) == "P1")]
 
 # Find maximum populations
 gene_max <- data.frame(gene = RNA.counts.all$genes, maxPopRNA = colnames(RNA.cpm.log2)[max.col( RNA.cpm.log2)])
