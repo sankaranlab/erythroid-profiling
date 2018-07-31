@@ -59,4 +59,3 @@ df$p <- formatC(df$p, format = "e", digits = 2)
 write.table(df, file = "../../processed/peakGeneCorrelations_1Mb_all.tsv", 
             row.names = FALSE, col.names = FALSE, sep = "\t", quote = FALSE)
 
-

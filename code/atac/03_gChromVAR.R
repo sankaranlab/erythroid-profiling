@@ -74,10 +74,10 @@ rownames(outdf) <- gsub("_PP001_betas", "", rownames(outdf))
 mdf <- reshape2::melt(outdf)
 mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8))))
 
-p2 <- ggplot(mdf[mdf$Var1 %in% c("HGB","HCT","RBC_COUNT",
-                           "MCHC","MCV","MCH","RETIC_COUNT","MEAN_RETIC_COUNT") , ],
+erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
+p2 <- ggplot(mdf[mdf$Var1 %in% erytraits , ],
        aes(x = Var2, y = value, color = Var1, group = Var1)) +
   geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
 
-ggsave(p2, filename = "../../plots/gchromVAR_eryonly.pdf", width = 3.5, height = 1.5)
+p2 <- ggsave(p2, filename = "../../plots/gchromVAR_eryonly.pdf", width = 4.5, height = 2.5)

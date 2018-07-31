@@ -44,3 +44,9 @@ dev.off()
 
 
 #codingGenes[codingGenes %ni% unique(go$gene)]
+
+hgb_genes <- c("HBA1","HBA2","HBB","HBD","HBE1",
+               "HBG1","HBG2","HBM","HBQ1","HBZ")
+allFC[allFC$gene %in% hgb_genes,] %>% group_by(timepoint) %>% 
+  summarize(mean(log2FoldChange))
+

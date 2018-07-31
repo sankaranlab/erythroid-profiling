@@ -17,11 +17,10 @@ raw <- data.frame(fread("../../data/corces/atac_combinedPopulations/panHeme.coun
 ATAC.counts <- data.matrix(raw)
 meta <- colnames(ATAC.counts)
 
-
 # Normalize
 cpm <- sweep(raw, 2, colSums(raw), FUN="/") * 1000000
 
-# Find overlaps with SNPS
+# Find overlaps with fine-mapped SNPS
 import_to_df <- function(trait){
   file <- paste0("../../data/FMsnps/",trait,"_PP001_betas.bed")
   tab <- read.table(file)
