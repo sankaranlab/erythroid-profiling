@@ -8,25 +8,32 @@ library(BuenColors)
 library(qvalue)
 "%ni%" <- Negate("%in%")
 
-#setwd("/Users/erikbao/Documents/GitHub/ery-final/")
+setwd("/Users/erikbao/Documents/GitHub/ery-final/code/atac")
 
 # Load kmeans GWAS variants -----------------------------------------------
 
 # Fine-map variants PP>0.10
 kmeans_df <- fread("../../processed/Kmeans_GWAS_lineage.tsv")
+kmeans_df_nonunique <- fread("../../processed/Kmeans_GWAS_lineage_nonunique.tsv")
+joined <- left_join(kmeans_df_nonunique,kmeans_df[,c("seqnames","start","Kcluster")],by=c("seqnames","start")) %>% distinct()
+
 CS.gr <- readRDS("/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/Finemap/UKBB_BC_v3_VEPannotations.rds")
 CS.df <- CS.gr %>% as.data.frame() 
 CS.df$merge <- paste(CS.df$seqnames,CS.df$start,sep=":")
-kmeans_df$merge <- paste(kmeans_df$seqnames,kmeans_df$start,sep=":")
-merged <- merge(kmeans_df,CS.df[,c("merge","var","Consequence","SYMBOL")],by="merge") %>% dplyr::select(-merge) %>% unique()
+joined$merge <- paste(joined$seqnames,joined$start,sep=":")
 
+merged <- merge(joined,CS.df[,c("merge","var","Consequence","SYMBOL")],by="merge") %>% dplyr::select(-merge) %>% unique()
+
+# Number of variants in each cluster/group of clusters
 m1 <- merged[merged$Kcluster %in% c("K6","K7"),] %>% group_by(trait) %>% summarise(n())
 m2 <- merged %>% group_by(trait) %>% summarise(n())
 
+# Variants that are in peaks stronger in P2-P4
+merged[merged$Kcluster %in% c("K6") & merged$trait %in% "HGB",]  %>% distinct(var)
 
 # PChIC Gene Targets ------------------------------------------------------
 # Read in PCHIC 
-pchic <- readRDS("../../..//singlecell_bloodtraits/data/pchic/pchic.rds")
+pchic <- readRDS("/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/pchic/pchic.rds")
 pchic.gr <- GRanges(pchic)
 grch38.pc <- grch38 %>%
   dplyr::filter(biotype == "protein_coding")
@@ -43,13 +50,15 @@ pchic.df.RBC$tomerge <- paste(pchic.df.RBC$seqnames,pchic.df.RBC$variantPos,sep=
 merged$tomerge <- paste(merged$seqnames,merged$start,sep=":")
 pchic.merged <- left_join(merged,pchic.df.RBC[,c("tomerge","Gene","Value","rsid")],by="tomerge") %>% dplyr::select(-tomerge)
 
-pchic.merged[pchic.merged$Kcluster %in% c("K6","K7") &
-               pchic.merged$trait == "HGB",] %>% dplyr::select(PP,var,Gene) %>% distinct()
-
+pchic.merged[pchic.merged$Kcluster %in% c("K6") &
+               pchic.merged$trait == "HGB"&
+               pchic.merged$Gene != "<NA>" &
+               pchic.merged$var != "<NA>",]  %>%
+  distinct(Gene) %>% write.table(.,"../../data/FUMA/pchic.hgb.k6.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 # ATAC-RNA correlations gene targets from larger hemeATAC --------------------------------------
 # Read in enhancer gene correlations
-pg.df <- fread(paste0("zcat < ", "../../../singlecell_bloodtraits/data/bulk/peakGeneCorrelation.tsv.gz"))
+pg.df <- fread(paste0("zcat < ", "/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/bulk/peakGeneCorrelation.tsv.gz"))
 names(pg.df) <- c("chrom","j.start","j.end","gene","cor","pvalue")
 pg.df$qvalue <- qvalue(pg.df$pvalue)$qvalues
 pg.df <- pg.df %>%
@@ -58,12 +67,16 @@ pg.df <- pg.df %>%
 setkey(setDT(merged), seqnames, start, end)
 setkey(setDT(pg.df), chrom, j.start, j.end)
 ATAC.cor <- foverlaps(merged,pg.df, nomatch = 0)  %>%
-  deployer::filter(PP > 0.1) %>%
+  dplyr::filter(PP > 0.1) %>%
   dplyr::select(var, trait, PP, seqnames, start, end, gene, cor, qvalue,Kcluster)
 
 ATAC.cor.RBC <- ATAC.cor %>%
   dplyr::filter(trait %in% c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")) %>%
   GRanges()
+
+ATAC.cor[ATAC.cor$Kcluster %in% c("K6") &
+               ATAC.cor$trait == "HGB",] %>% as.data.frame() %>% 
+  distinct(gene) %>% write.table(.,"../../data/FUMA/panheme_atac_rna.hgb.k6.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 make_atac_genelist <- function(df,clust){
   filtered_cs <- df %>% as.data.frame() %>% subset(Kcluster %in% clust)
@@ -92,12 +105,17 @@ names(erycor.df) <- c("chrom","j.start","j.end","gene","cor","pvalue","qvalue")
 setkey(setDT(merged), seqnames, start, end)
 setkey(setDT(erycor.df), chrom, j.start, j.end)
 ATAC.cor <- data.table::foverlaps(merged,erycor.df, nomatch = 0)  %>%
-  deployer::filter(PP > 0.1) %>%
+  dplyr::filter(PP > 0.1) %>%
   dplyr::select(var, trait, PP, seqnames, start, end, gene, cor, qvalue,Kcluster)
+
+ATAC.cor[ATAC.cor$Kcluster %in% c("K6","K7") &
+           ATAC.cor$trait == "HGB",] %>% as.data.frame() %>% 
+  distinct(gene)%>% write.table(.,"../../data/FUMA/HGB_analysis/eryheme_atac_rna.hgb.k6.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 ATAC.cor.RBC <- ATAC.cor %>%
   dplyr::filter(trait %in% c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")) %>%
   GRanges()
+
 # FUMA PChic gene to function --------------------------------------------------------
 make_pchic_genelist <- function(df,clust){
   filtered_cs <- df %>% subset(Kcluster %in% clust)
@@ -147,15 +165,3 @@ K8K9 <- dplyr::union_all(make_atac_genelist(ATAC.cor.RBC,clust=paste0("K",8:9)),
                          make_pchic_genelist(pchic.merged,clust=paste0("K",8:9)),
                          make_coding_genelist(merged,clust=paste0("K",8:9)))
 write.table(K8K9, file = "data/FUMA/k8_9_all_target_genes.txt", sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
-
-# MotifbreakR -------------------------------------------------------------
-library(motifbreakR)
-motifbreakr <- readRDS("../singlecell_bloodtraits/data/motifbreakR/alltraits.mbreaker.withPPs.rds")
-motifbreakr[motifbreakr$SNP %in% "chr20:4162978:C:T",]
-
-TMCC2_coordinates <- c(205197008,205242501)
-flank <- 10000
-CS.gr %>% subset(seqnames == "chr1" & 
-                   start > (TMCC2_coordinates[1]-flank) & 
-                   end < TMCC2_coordinates[2]+flank)
