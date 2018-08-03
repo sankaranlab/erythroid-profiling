@@ -62,8 +62,8 @@ findBest <- cluster::clusGap(ATAC.cpm.log2.all.mm.RBC, FUN = kmeans, K.max = 15,
 qplot(1:15,findBest$Tab[,3])
 
 uniqueSNP$Kcluster <- as.character(km.cluster)
-write.table(uniqueSNP, file = "../../processed/Kmeans_GWAS_lineage.tsv", sep = "\t", quote = FALSE, 
-            col.names = TRUE, row.names = FALSE)
+# write.table(uniqueSNP, file = "../../processed/Kmeans_GWAS_lineage.tsv", sep = "\t", quote = FALSE, 
+#             col.names = TRUE, row.names = FALSE)
 
 # Make final scree plot
 df <- data.frame(K = 1:15, Gap = findBest$Tab[,3])

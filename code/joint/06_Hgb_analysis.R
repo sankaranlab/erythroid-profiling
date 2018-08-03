@@ -25,9 +25,10 @@ hgb_genes <- c("HBA1","HBB")
 temp2 <- erycor.df[erycor.df$gene %in% hgb_genes,] %>% group_by(gene) %>% summarize(n()) 
 median(temp2$`n()`)
 
-# Heatmap of Hgb-correlated peaks across heme states 
 
-# Import
+# Generate Heatmap of Hgb-correlated peaks across heme states  ---------------------
+
+# Import peaks
 bed <- data.frame(fread("../../data/corces/panHeme.bed", header = FALSE))
 colnames(bed) <- c("chr", "start", "end")
 peak_gr <- makeGRangesFromDataFrame(bed)
