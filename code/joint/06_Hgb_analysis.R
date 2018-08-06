@@ -15,18 +15,8 @@ library(chromVAR)
 library(gchromVAR)
 library(chromVARxx)
 library(BSgenome.Hsapiens.UCSC.hg19)
+library(ggextra)
 "%ni%" <- Negate("%in%")
-       
-# Functions
-colScale = function(x,center = TRUE, scale = TRUE){
-  cm = colMeans(x, na.rm = TRUE)
-  csd = colSds(x, center = cm)
-  x = t( (t(x) - cm) / csd )
-  return(x)
-}
-
-eryth_color_maps <- c("P1" = "#3b82ae", "P2" = "#547294", "P3" = "#6d617a", "P4" = "#865160", "P5" = "#9f4046", "P6" = "#b8302c", "P7" = "#d11f12", "P8" = "#de1705")
-
 
 # Identifying g-chromVAR trends -------------------------------------------
 
@@ -49,13 +39,13 @@ SE <- SummarizedExperiment(assays = list(counts = counts),
 SE <- filterPeaks(SE)
 SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 ukbb <- importBedScore(rowRanges(SE), list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
-erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
 
 # Tangent-- find peaks with high PP + accessibility 
 cpm <- sweep(counts, 2, colSums(counts), FUN="/") * 1000000
 
 # Take only peaks with a cumulative PP of 0.1 across all erythroid traits
-keepPeaks <- rowSums(assays(ukbb)[["weights"]][,paste0(erytraits, "_PP001_betas")]) > 0.1
+erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
+keepPeaks <- rowSums(assays(ukbb)[["weights"]][,paste0(erytraits, "_PP001_betas")]) > 0.5
 mega_df <- data.frame(
   rowRanges(SE)[keepPeaks],
   data.matrix(cpm[keepPeaks,]), # fix here with CPM
@@ -64,12 +54,53 @@ colnames(mega_df)[15:ncol(mega_df)] <- erytraits
 
 mega_df$meanP2_4 <- apply(mega_df[,paste0("P",seq(2,4))],1,mean)
 mega_df$meanP5_6 <- apply(mega_df[,paste0("P",seq(5,6))],1,mean)
-mega_df$FC <- mega_df$meanP5_6  / mega_df$meanP2_4
+mega_df$FC <- log2(mega_df$meanP5_6  / mega_df$meanP2_4)
+
+# Overlap with finemapped variants
+# CS.gr <- readRDS("../../data/UKBB_BC_v3_VEPannotations.rds")
+CS.df <- CS.gr %>% as.data.frame() %>% as.data.table
+setkey(setDT(CS.df), seqnames, start, end)
+
+mega_df<-as.data.table(mega_df)
+names(mega_df) <- c("chrom","j.start","j.end",names(mega_df)[4:ncol(mega_df)])
+setkey(setDT(mega_df), chrom, j.start, j.end)
+
+traits_to_plot <- c("HGB","HCT")
+hgb_variants <- foverlaps(CS.df,mega_df, nomatch = 0)  %>%
+  dplyr::filter(trait %in% traits_to_plot) %>% arrange(desc(PP)) %>% 
+  dplyr::select(var,trait, seqnames, start,end,PP,meanP2_4,meanP5_6,FC) %>%
+  distinct(var,.keep_all=TRUE)
+
+# HGB/HCT Volcano plot
+p1 <- ggplot(hgb_variants, aes(x=FC, y=PP)) +
+  geom_point() +
+  pretty_plot() + 
+  L_border() + 
+  geom_vline(xintercept = 0, linetype = 2)
+ggExtra::ggMarginal(p1, type = "boxplot",margins="x")
+
+plot(density(all_variants$FC))
+
+# MCV/MCH Volcano plot
+traits_to_plot <- c("MCV","MCH")
+mcv_variants <- foverlaps(CS.df,mega_df, nomatch = 0)  %>%
+  dplyr::filter(trait %in% traits_to_plot) %>% arrange(desc(PP)) %>% 
+  dplyr::select(var,trait, seqnames, start,end,PP,meanP2_4,meanP5_6,FC) %>%
+  distinct(var,.keep_all=TRUE)
+
+# Volcano plot
+ggplot(mcv_variants, aes(x=FC, y=PP)) +
+  geom_point() +
+  pretty_plot() + 
+  L_border() + 
+  geom_vline(xintercept = 0, linetype = 2)
+
+plot(density(all_variants$FC))
+
+exdf <- read.table("../../../singlecell_bloodtraits/figures/revisions/exclude_list_revised.txt", header = FALSE, stringsAsFactors = FALSE)[,1]
 
 # Top HGB peaks
 mega_df %>% filter(meanP2_4>meanP5_6) %>% filter(HGB>0.10) %>% arrange(desc(HGB)) -> HGB_peaks
-
-exdf <- read.table("../../../singlecell_bloodtraits/figures/revisions/exclude_list_revised.txt", header = FALSE, stringsAsFactors = FALSE)[,1]
 
 pg.df <- fread(paste0("zcat < ", "/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/bulk/peakGeneCorrelation.tsv.gz"))
 names(pg.df) <- c("chrom","j.start","j.end","gene","cor","pvalue")
@@ -88,17 +119,48 @@ for (i in 1:nrow(HGB_peaks)){
 # Overlap with finemapped variants
 CS.gr <- readRDS("../../data/UKBB_BC_v3_VEPannotations.rds")
 CS.df <- CS.gr %>% as.data.frame() %>% as.data.table
-HGB_peaks<-as.data.table(HGB_peaks)
 setkey(setDT(CS.df), seqnames, start, end)
-setkey(setDT(HGB_peaks), seqnames, start, end)
+
+mega_df %>% filter(meanP2_4>meanP5_6) %>% filter(HGB>0.10) %>% arrange(desc(HGB)) -> HGB_peaks
+HGB_peaks<-as.data.table(HGB_peaks)
+names(HGB_peaks) <- c("chrom","j.start","j.end",names(HGB_peaks)[4:ncol(HGB_peaks)])
+setkey(setDT(HGB_peaks), chrom, j.start, j.end)
 
 HGB_variants <- foverlaps(CS.df,HGB_peaks, nomatch = 0)  %>%
-  dplyr::filter(PP > 0.1 & trait == "HGB") %>% arrange(desc(PP)) %>% dplyr::select(paste0("P",seq(1,8)), var,PP)
+  dplyr::filter(PP > 0.1 & trait == "HGB") %>% arrange(desc(PP)) %>% dplyr::select(var,seqnames, start,end,PP,meanP2_4,meanP5_6,FC)
+
+setkey(setDT(HGB_variants), seqnames, start, end)
+setkey(setDT(pg.df), chrom, j.start, j.end)
+hgb_atac_cor<- foverlaps(HGB_variants,pg.df) %>%  arrange(desc(PP)) %>% 
+  dplyr::select(var,seqnames, start,end,PP,meanP2_4,meanP5_6,FC,gene,qvalue)
+
+# PChic HGB variants
+pchic <- readRDS("/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/pchic/pchic.rds")
+pchic.gr <- GRanges(pchic)
+grch38.pc <- grch38 %>%
+  dplyr::filter(biotype == "protein_coding")
+pchic.gr <- pchic.gr[pchic.gr$Gene %in% grch38.pc$symbol,]
+
+erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
+pchic.gr.RBC <- pchic.gr[pchic.gr$CellType == "Ery" & pchic.gr$PP > 0.1 & pchic.gr$Trait %in% "HGB",]
+pchic.df.RBC <- as.data.frame(pchic.gr.RBC)
+pchic.df.RBC$tomerge <- paste(pchic.df.RBC$seqnames,pchic.df.RBC$variantPos,sep=":")
+hgb_atac_cor$tomerge <- paste(hgb_atac_cor$seqnames,hgb_atac_cor$start,sep=":")
+
+pchic_atac_merged <- left_join(hgb_atac_cor, pchic.df.RBC,by=c("tomerge")) 
 
 # MotifbreakR overlap
 motifbreakr <- readRDS("../../../singlecell_bloodtraits/data/motifbreakR/alltraits.mbreaker.withPPs.rds")
 
-vars_reformatted <- paste0("chr",gsub("_",":",HGB_variants$var))
+hgb_atac_cor$tomerge <- paste0("chr",gsub("_",":",hgb_atac_cor$var))
+
+hgb_atac_cor_motifs <- left_join(hgb_atac_cor,motifbreakr[motifbreakr$trait %in% "HGB",],
+                                 by=c("tomerge"="SNP")) %>% dplyr::select(c(1:9),geneSymbol) %>% 
+  rename(motif=geneSymbol)
+
+write.table(hgb_atac_cor_motifs,"../../data/hgb_variants.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+
+vars_reformatted <- paste0("chr",gsub("_",":",hgb_atac_cor$var))
 hgb_motifs <- motifbreakr[motifbreakr$SNP %in% vars_reformatted,]
 hgb_motifs %>% filter(PP>0.10,trait=="HGB",effect=="strong") 
 
@@ -115,7 +177,21 @@ for (i in 1:nrow(MCV_peaks)){
 MCV_peaks<-as.data.table(MCV_peaks)
 setkey(setDT(MCV_peaks), seqnames, start, end)
 MCV_variants <- foverlaps(CS.df,MCV_peaks, nomatch = 0)  %>%
-  dplyr::filter(PP > 0.1 & trait == "MCV") %>% arrange(desc(PP)) %>% dplyr::select(paste0("P",seq(1,8)), var,PP)
+  dplyr::filter(PP > 0.1 & trait == "MCV") %>% arrange(desc(PP)) %>% dplyr::select(var,seqnames, start,end,PP,meanP2_4,meanP5_6,FC)
+
+setkey(setDT(MCV_variants), seqnames, start, end)
+setkey(setDT(pg.df), chrom, j.start, j.end)
+atac_cor<- foverlaps(MCV_variants,pg.df) %>%  arrange(desc(PP)) %>% 
+  dplyr::select(var,seqnames, start,end,PP,meanP2_4,meanP5_6,FC,gene,qvalue)
+
+# MotifbreakR overlap
+atac_cor$tomerge <- paste0("chr",gsub("_",":",atac_cor$var))
+atac_cor_motifs <- left_join(atac_cor,motifbreakr[motifbreakr$trait %in% "MCV",],
+                                 by=c("tomerge"="SNP")) %>% dplyr::select(c(1:9),geneSymbol) %>% 
+  rename(motif=geneSymbol) %>% distinct()
+
+write.table(atac_cor_motifs,"../../data/mcv_variants.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+
 
 vars_reformatted <- paste0("chr",gsub("_",":",MCV_variants$var))
 mcv_motifs <- motifbreakr[motifbreakr$SNP %in% vars_reformatted,]
@@ -186,23 +262,6 @@ k6_hgb_motifs <- motifbreakr[motifbreakr$SNP %in% k6_vars_reformatted,]
 k6_hgb_motifs %>% filter(PP>0.10,trait=="HGB",effect=="strong") 
 k6_hgb_motifs %>% filter(PP>0.10,trait=="HGB",effect=="strong") -> output
 write.table(output$geneSymbol,file="../../data/FUMA/HGB_analysis/k6_0.7_mbreaker.txt", sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
-# PChic HGB variants
-pchic <- readRDS("/Users/erikbao/Documents/GitHub/singlecell_bloodtraits/data/pchic/pchic.rds")
-pchic.gr <- GRanges(pchic)
-grch38.pc <- grch38 %>%
-  dplyr::filter(biotype == "protein_coding")
-pchic.gr <- pchic.gr[pchic.gr$Gene %in% grch38.pc$symbol,]
-
-erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
-pchic.gr.RBC <- pchic.gr[pchic.gr$CellType == "Ery" & pchic.gr$PP > 0.1 & pchic.gr$Trait %in% erytraits,]
-pchic.df.RBC <- as.data.frame(pchic.gr.RBC)
-pchic.df.RBC$tomerge <- paste(pchic.df.RBC$seqnames,pchic.df.RBC$variantPos,sep=":")
-P2_P4_df$tomerge <- paste(P2_P4_df$seqnames,P2_P4_df$start,sep=":")
-pchic_vars <- P2_P4_df[P2_P4_df$trait %in% "HGB",]$tomerge
-
-pchic.df.RBC[pchic.df.RBC$tomerge %in% pchic_vars,] %>% distinct(Gene)
-
 
 # Overlap strong P5-6 peaks with non-HGB/HCT variants --------------------------------
 
