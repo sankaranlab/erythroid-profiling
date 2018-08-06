@@ -2,7 +2,7 @@ library(data.table)
 library(dplyr)
 library(BuenColors)
 
-lapply(list.files("../../processed/all_DEseq2/"), function(x){
+lapply(list.files("../../processed/all_DEseq2/", pattern = "^P1_*"), function(x){
   df <- read.table(paste0("../../processed/all_DEseq2/", x), header = TRUE)
   df$timepoint <- stringr::str_split_fixed(x, "_", 3)[1,2]
   df <- df[df$baseMean > 500,]
