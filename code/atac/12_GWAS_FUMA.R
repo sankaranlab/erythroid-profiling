@@ -38,10 +38,6 @@ pchic.gr <- GRanges(pchic)
 grch38.pc <- grch38 %>%
   dplyr::filter(biotype == "protein_coding")
 pchic.gr <- pchic.gr[pchic.gr$Gene %in% grch38.pc$symbol,]
-# # Read in CD34 PCHIC
-# pchic_cd34 <- readRDS("/Volumes/broad_sankaranlab/ebao/singlecell_bloodtraits/data/pchic/cd34_loops.rds")
-# pchic_cd34.gr <- GRanges(pchic_cd34)
-# pchic_cd34.gr <- pchic_cd34.gr[pchic_cd34.gr$gene %in% grch38.pc$symbol,]
 
 erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
 pchic.gr.RBC <- pchic.gr[pchic.gr$CellType == "Ery" & pchic.gr$PP > 0.1 & pchic.gr$Trait %in% erytraits,]
@@ -54,7 +50,7 @@ pchic.merged[pchic.merged$Kcluster %in% c("K6") &
                pchic.merged$trait == "HGB"&
                pchic.merged$Gene != "<NA>" &
                pchic.merged$var != "<NA>",]  %>%
-  distinct(Gene) %>% write.table(.,"../../data/FUMA/pchic.hgb.k6.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  distinct(Gene,var,PP) #%>% write.table(.,"../../data/FUMA/pchic.hgb.k6.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
 
 # ATAC-RNA correlations gene targets from larger hemeATAC --------------------------------------
 # Read in enhancer gene correlations

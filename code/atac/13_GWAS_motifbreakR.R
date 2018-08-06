@@ -24,17 +24,26 @@ joined$merge <- paste(joined$seqnames,joined$start,sep=":")
 
 merged <- merge(joined,CS.df[,c("merge","var","Consequence","SYMBOL")],by="merge") %>% dplyr::select(-merge) %>% unique()
 
-# Number of variants in each cluster/group of clusters
-m1 <- merged[merged$Kcluster %in% c("K6","K7"),] %>% group_by(trait) %>% summarise(n())
-m2 <- merged %>% group_by(trait) %>% summarise(n())
-
 # Variants that are in peaks stronger in P2-P4
 merged[merged$Kcluster %in% c("K6") & merged$trait %in% "HGB",]  %>% distinct(var)
 
 # MotifbreakR -------------------------------------------------------------
 library(motifbreakR)
 motifbreakr <- readRDS("../../../singlecell_bloodtraits/data/motifbreakR/alltraits.mbreaker.withPPs.rds")
-motifbreakr[motifbreakr$SNP %in% "chr20:4162978:C:T",]
+
+# Motifs disrupted by HGB variants in K6
+merged[merged$Kcluster %in% c("K6") & merged$trait %in% "HGB",]  %>% distinct(var) %>%
+  as.data.frame() -> k6_vars
+k6_vars_reformatted <- paste0("chr",gsub("_",":",k6_vars[,1]))
+k6_hgb_motifs <- motifbreakr[motifbreakr$SNP %in% k6_vars_reformatted,]
+k6_hgb_motifs %>% filter(PP>0.10,trait=="HGB",effect=="strong")
+
+# Motifs disrupted by HGB variants in K6
+merged[merged$Kcluster %in% c("K8") & merged$trait %in% "MCV",]  %>% distinct(var) %>%
+  as.data.frame() -> temp
+temp_reformatted <- paste0("chr",gsub("_",":",temp[,1]))
+k8_mcv_motifs <- motifbreakr[motifbreakr$SNP %in% temp_reformatted,]
+k8_mcv_motifs %>% filter(PP>0.10,trait=="MCV",effect=="strong") 
 
 TMCC2_coordinates <- c(205197008,205242501)
 flank <- 10000

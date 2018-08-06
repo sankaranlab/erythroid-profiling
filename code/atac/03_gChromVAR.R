@@ -22,8 +22,8 @@ counts <-  data.matrix(data.frame(fread("../../data/corces/atac_combinedPopulati
 
 # Create objects for g-chromVAR
 SE <- SummarizedExperiment(assays = list(counts = counts),
-                               rowData = peaks, 
-                               colData = DataFrame(names = colnames(counts)))
+                           rowData = peaks, 
+                           colData = DataFrame(names = colnames(counts)))
 SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 ukbb <- importBedScore(rowRanges(SE), list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
 
@@ -37,9 +37,9 @@ mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP"
 
 ggplot(mdf[mdf$Var1 %in% c( "HGB", "MCV", "MCH", "MCHC", "RETIC_COUNT",
                             "MEAN_RETIC_VOL", "RBC_COUNT","PLT_COUNT") , ],
-             aes(x = Var2, y = value, color = Var1, group = Var1)) +
+       aes(x = Var2, y = value, color = Var1, group = Var1)) +
   geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
-   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
+  labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
 
 ggsave(p1, filename = "../../plots/gchromVAR_selected.pdf", width = 3.5, height = 1.5)
 
@@ -65,6 +65,29 @@ SE <- SummarizedExperiment(assays = list(counts = counts),
 SE <- filterPeaks(SE)
 SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 ukbb <- importBedScore(rowRanges(SE), list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
+erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
+
+# Tangent-- find peaks with high PP + accessibility 
+cpm <- sweep(counts, 2, colSums(counts), FUN="/") * 1000000
+
+# Take only peaks with a cumulative PP of 0.1 across all erythroid traits
+keepPeaks <- rowSums(assays(ukbb)[["weights"]][,paste0(erytraits, "_PP001_betas")]) > 0.1
+mega_df <- data.frame(
+  rowRanges(SE)[keepPeaks],
+  data.matrix(cpm[keepPeaks,]), # fix here with CPM
+  data.matrix(assays(ukbb)[["weights"]][keepPeaks,paste0(erytraits, "_PP001_betas")]))
+colnames(mega_df)[15:ncol(mega_df)] <- erytraits
+
+mega_df$meanP2_4 <- apply(mega_df[,paste0("P",seq(2,4))],1,mean)
+mega_df$meanP5_6 <- apply(mega_df[,paste0("P",seq(5,6))],1,mean)
+
+# Top HGB peaks
+mega_df %>% filter(meanP2_4>meanP5_6) %>% filter(HGB>0.10) %>% arrange(desc(HGB))
+# Top MCV peaks
+mega_df %>% filter(meanP5_6>meanP2_4) %>% filter(MCV>0.10) %>%  arrange(desc(MCV)) %>% nrow
+
+exdf <- read.table("../../../singlecell_bloodtraits/figures/revisions/exclude_list_revised.txt", header = FALSE, stringsAsFactors = FALSE)[,1]
+
 
 # Run g-chromVAR
 bg <- getBackgroundPeaks(SE)
@@ -74,9 +97,9 @@ rownames(outdf) <- gsub("_PP001_betas", "", rownames(outdf))
 mdf <- reshape2::melt(outdf)
 mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8))))
 
-erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
+
 p2 <- ggplot(mdf[mdf$Var1 %in% erytraits , ],
-       aes(x = Var2, y = value, color = Var1, group = Var1)) +
+             aes(x = Var2, y = value, color = Var1, group = Var1)) +
   geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "right") 
 

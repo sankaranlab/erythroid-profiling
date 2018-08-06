@@ -3,6 +3,7 @@ library(irlba)
 library(annotables)
 library(BuenColors)
 library(chromVAR)
+library(chromVARxx)
 library(chromVARmotifs)
 library(SummarizedExperiment)
 library(BiocParallel)
@@ -40,6 +41,8 @@ data("human_pwms_v2")
 motif_ix <- matchMotifs(human_pwms_v2, SE, genome = BSgenome.Hsapiens.UCSC.hg19)
 names(assays(motif_ix)) <- "weights"
 dev <- gchromVAR::computeWeightedDeviations(object = SE, weights = motif_ix)
+#saveRDS(dev,file="../../data/chromVAR/chromVAR_eryonly_dev.rds")
+#write.table(deviationScores(dev),file="../../data/chromVAR/chromVAR_eryonly_devscores.txt", sep = " ", quote = FALSE, col.names = T, row.names = T)
 
 # Do Variability
 bagged <- chromVARxx::bagDeviations(dev, 0.8, "human")
@@ -70,3 +73,4 @@ hm <- Heatmap(m, col=as.character(jdb_palette("solar_extra",type="continuous")),
               show_column_names = FALSE)
 hm
 dev.off()
+
