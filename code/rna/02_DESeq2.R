@@ -15,7 +15,6 @@ raw <- raw[raw[,29] %in% symbol_keep,]
 RNA.counts <- raw[,1:28]
 meta <- stringr::str_split_fixed(colnames(RNA.counts), "_", 4)
 
-
 # RNA DEseq2 setup
 RNA.counts.df <- as.data.frame(RNA.counts)
 
