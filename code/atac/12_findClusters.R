@@ -8,7 +8,7 @@ library(annotables)
 register(MulticoreParam(2))
 
 # Import raw expression values
-raw <- read.table("../../data/ATAC_data/ery_only.counts.tsv", header = TRUE)
+raw <- read.table("../../data/ATAC_data/", header = TRUE)
 ATAC.counts <- raw[,1:28]
 meta <- stringr::str_split_fixed(colnames(ATAC.counts), "_", 4)
 peaks <- data.frame(fread("../../data/ATAC_data/ery_only.bed"))
