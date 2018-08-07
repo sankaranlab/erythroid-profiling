@@ -75,9 +75,12 @@ rownames(outdf) <- gsub("_PP001_betas", "", rownames(outdf))
 mdf <- reshape2::melt(outdf)
 mdf$Var2 <- factor(as.character(mdf$Var2), levels = c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8))))
 
-p2 <- ggplot(mdf[mdf$Var1 %in% erytraits , ],
+traits_to_plot <- c("HGB","HCT","MCV","MCHC","MCH","RBC_COUNT") # Traits endorsed by Leif Ludwig
+p2 <-ggplot(mdf[mdf$Var1 %in% traits_to_plot , ],
              aes(x = Var2, y = value, color = Var1, group = Var1)) +
-  geom_point() + geom_line() + pretty_plot(fontsize = 8) + L_border() + 
+  geom_point(size=2) + geom_line(size=1) + 
+  pretty_plot(fontsize = 10) + L_border() +
+  scale_color_manual(values=c(jdb_palette("Rushmore"),jdb_palette("flame_light")[c(5)])) +
   labs(x = "", y = "g-chromVAR Zscore", color = "") + theme(legend.position = "bottom") 
 
-ggsave(p2, filename = "../../plots/gchromVAR_eryonly_selected.pdf", width = 4, height = 3)
+ggsave(p2, filename = "../../plots/gchromVAR_eryonly_MCV_MCH_MCHC_RBC.pdf", width = 3.5, height = 3.5)
