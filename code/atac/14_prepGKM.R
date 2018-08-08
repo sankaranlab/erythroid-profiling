@@ -26,6 +26,6 @@ Ps <- paste0("P", as.character(1:8))
 lapply(1:8, function(i){
   write.table(peaks[which(ATAC.counts.filt.Z[,i] > Qs[i]),], 
               file = paste0("../../processed/gkmerpeaks/topPeaks-", Ps[i], ".bed"),
-              row.names = FALSE, col.names = FALSE, quote = FALSE) 
+              row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t") 
 })
 
