@@ -9,20 +9,22 @@ library(qvalue)
 library(lettercase)
 "%ni%" <- Negate("%in%")
 
-setwd("/Users/erikbao/Documents/GitHub/ery-final/code/atac")
+setwd("/Users/erikbao/Documents/GitHub/ery-final/code/rna")
 
 # Load clustered differentially expressed genes  -----------------------------------------------
 kmeans_df <- fread("../../processed/RNAseq-Kmeans7-clusterID-allpops.tsv")
 outdir <- "../../data/FUMA/All_DiffExpressed/allpops/"
-kmeans_df[kmeans_df$cluster == "K1",]$gene %>% write.table(.,paste0(outdir,"allDiff.k1.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K2",]$gene %>% write.table(.,paste0(outdir,"allDiff.k2.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K3",]$gene %>% write.table(.,paste0(outdir,"allDiff.k3.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K4",]$gene %>% write.table(.,paste0(outdir,"allDiff.k4.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K5",]$gene %>% write.table(.,paste0(outdir,"allDiff.k5.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K6",]$gene %>% write.table(.,paste0(outdir,"allDiff.k6.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-kmeans_df[kmeans_df$cluster == "K7",]$gene %>% write.table(.,paste0(outdir,"allDiff.k7.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
-
-symbol_keep %>% write.table(.,"../../data/FUMA/All_DiffExpressed/gene_universe.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+if (FALSE){
+  kmeans_df[kmeans_df$cluster == "K1",]$gene %>% write.table(.,paste0(outdir,"allDiff.k1.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K2",]$gene %>% write.table(.,paste0(outdir,"allDiff.k2.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K3",]$gene %>% write.table(.,paste0(outdir,"allDiff.k3.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K4",]$gene %>% write.table(.,paste0(outdir,"allDiff.k4.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K5",]$gene %>% write.table(.,paste0(outdir,"allDiff.k5.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K6",]$gene %>% write.table(.,paste0(outdir,"allDiff.k6.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  kmeans_df[kmeans_df$cluster == "K7",]$gene %>% write.table(.,paste0(outdir,"allDiff.k7.txt"),sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+  
+  symbol_keep %>% write.table(.,"../../data/FUMA/All_DiffExpressed/gene_universe.txt",sep = " ", quote = FALSE, col.names = FALSE, row.names = FALSE)
+}
 
 # Plot enrichments --------------------------------------------------------
 
@@ -79,29 +81,11 @@ for (i in 1:7){
   plot_fuma(toplot[1:5,]) %>% ggsave(.,filename = paste0("../../plots/gene_set_enrichments/k",i,"_fuma_trimmed.pdf"), width =3.2, height = 2)
 }
 
-top_n=5
-outdir <- "../../data/FUMA/All_DiffExpressed/allpops/"
-GS_k1 <- fread(paste0(outdir,"GS_k1.txt")) %>%
-  dplyr::select(-link) %>% filter(Category == "GO_bp") %>% arrange(adjP)
-GS_k1 %>% head(top_n) %>% 
-  plot_fuma() %>% ggsave(.,filename = "../../plots/gene_set_enrichments/k1_fuma.pdf", width =8, height = 4.5)
-
-GS_k2 <- fread("../../data/FUMA/All_DiffExpressed/GS_k2.txt") %>%
-  dplyr::select(-link) %>% filter(Category == "GO_bp") %>% arrange(adjP)
-GS_k2 %>% head(top_n) %>% plot_fuma() %>%
-  ggsave(.,filename = "../../plots/gene_set_enrichments/k2_fuma.pdf", width =8, height = 4.5)
-
-GS_k3 <- fread("../../data/FUMA/All_DiffExpressed/GS_k3.txt") %>%
-  dplyr::select(-link) %>% filter(Category == "GO_bp") %>% arrange(adjP)
-GS_k3 %>% head(top_n) %>% plot_fuma() %>% 
-  ggsave(.,filename = "../../plots/gene_set_enrichments/k3_fuma.pdf", width =8, height = 4.5)
-
-GS_k4 <- fread("../../data/FUMA/All_DiffExpressed/GS_k4.txt") %>%
-  dplyr::select(-link) %>% filter(Category == "GO_bp") %>% arrange(adjP)
-GS_k4 %>% head(top_n) %>% plot_fuma() %>%
-  ggsave(.,filename = "../../plots/gene_set_enrichments/k4_fuma.pdf", width =8, height = 4.5)
-
-GS_k5 <- fread("../../data/FUMA/All_DiffExpressed/GS_k5.txt") %>%
-  dplyr::select(-link) %>% filter(Category == "GO_bp") %>% arrange(adjP)
-GS_k5 %>% head(top_n) %>% plot_fuma() %>% 
-  ggsave(.,filename = "../../plots/gene_set_enrichments/k5_fuma.pdf", width =8, height = 4.5)
+# Create supplemental table
+indir <- "../../data/FUMA/All_DiffExpressed/allpops/"
+outdir<-"../../tables/FUMA_allpops/"
+for (i in 1:7){
+  GS_k1 <- fread(paste0(indir,"GS_k",i,".txt")) %>% filter(Category == "GO_bp") %>% arrange(adjP) %>% dplyr::select(-Category) 
+  
+  write.table(GS_k1,file=paste0(outdir,"../../tables/FUMA_allpops/GO_enrichments_k",i,".tsv"),sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+}
