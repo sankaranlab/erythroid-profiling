@@ -24,6 +24,8 @@ library(ggrepel)
 # Import and run run run 
 peaksdf <- fread("../../data/ATAC_data/ery_only.bed")
 peaks <- makeGRangesFromDataFrame(peaksdf, seqnames = "V1", start.field = "V2", end.field = "V3")
+ukbb <- importBedScore(peaks, list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
+ukbb <- ukbb[keep,]
 
 ATAC.counts <- data.matrix(data.frame(data.table::fread("../../data/ATAC_data/ery_only.counts.tsv")))
 meta <- stringr::str_split_fixed(colnames(ATAC.counts), "_", 4)
@@ -33,16 +35,24 @@ sapply(pops.ordered, function(pop){
   rowSums(ATAC.counts[,meta[,3] == pop])
 }) -> counts
 
+if (TRUE){
+  # Keep only good peaks in nth percentile of at least one cell type
+  n = 0.8
+  counts_normalized <- normalize.quantiles(as.matrix(counts)) # Quantile normalize distributions across 8 pops
+  keep <- apply(counts_normalized,1,max) > mean(apply(counts_normalized,2,function(x) {quantile(x,n)})) # Compare max count in a peak with the mean nth percentile of all peaks per cell
+  counts <- counts[keep,]
+  
+  # Subset to only good peaks
+  peaks <- peaks[keep,]
+}
+
 # Create objects for g-chromVAR
+cpm <- round(sweep(counts, 2, colSums(counts), FUN="/") * 1000000, 1)
 SE <- SummarizedExperiment(assays = list(counts = counts),
                            rowData = peaks, 
                            colData = DataFrame(names = colnames(counts)))
 SE <- filterPeaks(SE)
 SE <- addGCBias(SE, genome = BSgenome.Hsapiens.UCSC.hg19)
-ukbb <- importBedScore(rowRanges(SE), list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
-
-# Tangent-- find peaks with high PP + accessibility 
-cpm <- sweep(counts, 2, colSums(counts), FUN="/") * 1000000
 
 # Take only peaks with a cumulative PP of x across all erythroid traits
 erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "MEAN_RETIC_VOL", "RBC_COUNT", "RETIC_COUNT")
@@ -89,7 +99,7 @@ p1 <-ggplot(hgb_variants, aes(x=FC, y=PP)) +
   theme(legend.position="none")
 
 # ggExtra::ggMarginal(p1, type = "density",margins="x")
-cowplot::ggsave(p1, file="../../plots/HGB_HCT_variants.pdf", width =3.5, height = 2.5)
+# cowplot::ggsave(p1, file="../../plots/HGB_HCT_variants.pdf", width =3.5, height = 2.5)
 
 # Weighted density plot
 d1 <- ggplot(hgb_variants, aes(FC)) +
@@ -98,7 +108,7 @@ d1 <- ggplot(hgb_variants, aes(FC)) +
   L_border() +
   labs(x="")+
   geom_vline(xintercept = 0, linetype = 2) 
-cowplot::ggsave(d1, file="../../plots/HGB_HCT_variants_weighteddensity.pdf", width =3.5, height = 1)
+# cowplot::ggsave(d1, file="../../plots/HGB_HCT_variants_weighteddensity.pdf", width =3.5, height = 1)
 
 
 # MCV/MCH/MCHC/RETIC/RBC plots --------------------------------------------
@@ -122,7 +132,7 @@ p2 <-ggplot(mcv_variants, aes(x=FC, y=PP)) +
   geom_vline(xintercept = 0, linetype = 2) + 
   labs(x="log2FC") 
 
-cowplot::ggsave(p2, file="../../plots/MCV_MCH_MCHC_RBC_variants.pdf", width =3.5, height = 2.5)
+#cowplot::ggsave(p2, file="../../plots/MCV_MCH_MCHC_RBC_variants.pdf", width =3.5, height = 2.5)
 
 # Weighted density
 d2 <-ggplot(mcv_variants, aes(FC)) +
@@ -131,7 +141,7 @@ d2 <-ggplot(mcv_variants, aes(FC)) +
   L_border() +
   labs(x="log2FC")+
   geom_vline(xintercept = 0, linetype = 2) 
-cowplot::ggsave(d2, file="../../plots/MCV_MCH_MCHC_RBC_variants_weighteddensity.pdf", width =3.5, height = 1)
+#cowplot::ggsave(d2, file="../../plots/MCV_MCH_MCHC_RBC_variants_weighteddensity.pdf", width =3.5, height = 1)
 
 
 # Merge with ATAC-RNA correlations ----------------------------------------
@@ -145,7 +155,7 @@ setkey(setDT(pg.df), chrom, j.start, j.end)
 hgb_variants <- as.data.table(hgb_variants)
 setkey(setDT(hgb_variants), seqnames, start, end)
 
-hgb_atac_cor<- foverlaps(hgb_variants,pg.df) %>%  
+hgb_atac_cor<- foverlaps(hgb_variants,pg.df,nomatch = NA) %>%  
   filter(PP>0.10) %>% 
   arrange(desc(PP)) %>% 
   dplyr::select(var,PP,FC,gene,qvalue,cor) %>%
@@ -166,16 +176,13 @@ motifbreakr <- readRDS("../../../singlecell_bloodtraits/data/motifbreakR/alltrai
 
 hgb_atac_cor$tomerge <- paste0("chr",gsub("_",":",hgb_atac_cor$var))
 hgb_atac_cor_motifs <- left_join(hgb_atac_cor,motifbreakr[motifbreakr$trait %in% "HGB",],
-                                 by=c("tomerge"="SNP")) %>% dplyr::select(c(1:6),geneSymbol) %>% 
-  rename(motif=geneSymbol)
-
-write.table(hgb_atac_cor_motifs,"../../data/hgb_variants.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+                                 by=c("tomerge"="SNP")) %>% dplyr::select(c(1:6),geneSymbol) %>% dplyr::rename(motif=geneSymbol)
 
 # MCV
 mcv_atac_cor$tomerge <- paste0("chr",gsub("_",":",mcv_atac_cor$var))
 mcv_atac_cor_motifs <- left_join(mcv_atac_cor,motifbreakr[motifbreakr$trait %in% "MCV",],
                              by=c("tomerge"="SNP")) %>% dplyr::select(c(1:6),geneSymbol) %>% 
-  rename(motif=geneSymbol) %>% distinct()
+  dplyr::rename(motif=geneSymbol) %>% distinct()
 
 
 # PChic HGB variants
@@ -189,16 +196,14 @@ erytraits <- c("HCT", "HGB", "MCH", "MCHC", "MCV", "RBC_COUNT")
 pchic.gr.RBC <- pchic.gr[pchic.gr$CellType == "Ery" & pchic.gr$Trait %in% erytraits,]
 pchic.df.RBC <- as.data.frame(pchic.gr.RBC)
 pchic.df.RBC$tomerge <- paste(pchic.df.RBC$seqnames,pchic.df.RBC$variantPos,sep=":")
-hgb_atac_cor_motifs$tomerge <- str_split_fixed(paste0("chr",hgb_atac_cor_motifs$var),"_",3)[,1]
 
-hgb_atac_cor_motifs_pchic <- left_join(hgb_atac_cor_motifs, pchic.df.RBC,by=c("tomerge"))  %>% 
-  filter(Trait %in% c("HGB","HCT")) %>% 
-  dplyr::select(c(1:7),Gene) %>% distinct()
+hgb_atac_cor_motifs$tomerge <- str_split_fixed(paste0("chr",hgb_atac_cor_motifs$var),"_",3)[,1]
+hgb_atac_cor_motifs_pchic <- left_join(hgb_atac_cor_motifs, pchic.df.RBC[pchic.df.RBC$Trait %in% "HGB",],by=c("tomerge"))  %>% 
+  dplyr::select(c(1:7),Gene) %>% dplyr::rename(pchic_gene = Gene) %>% distinct()
 
 mcv_atac_cor_motifs$tomerge <- str_split_fixed(paste0("chr",mcv_atac_cor_motifs$var),"_",3)[,1]
-mcv_atac_cor_motifs_pchic <- left_join(mcv_atac_cor_motifs, pchic.df.RBC,by=c("tomerge"))  %>% 
-  filter(Trait %in% c("MCV","MCHC","MCH","RBC_COUNT")) %>%
-  dplyr::select(c(1:7),Gene) %>% distinct()
+mcv_atac_cor_motifs_pchic <- left_join(mcv_atac_cor_motifs, pchic.df.RBC[pchic.df.RBC$Trait %in% "MCV",],by=c("tomerge"))  %>% 
+  dplyr::select(c(1:7),Gene) %>% dplyr::rename(pchic_gene = Gene) %>% distinct()
 
-write.table(hgb_atac_cor_motifs_pchic,"../../data/hgb_hct_variants.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
-write.table(mcv_atac_cor_motifs_pchic,"../../data/mcv_rbc_mchc_mch_variants.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+write.table(hgb_atac_cor_motifs_pchic,"../../data/hgb_hct_variants_goodpeaks.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
+write.table(mcv_atac_cor_motifs_pchic,"../../data/mcv_rbc_mchc_mch_variants_goodpeaks.tsv",sep = "\t", quote = FALSE, col.names = T, row.names = FALSE)
