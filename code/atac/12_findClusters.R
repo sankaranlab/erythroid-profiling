@@ -37,10 +37,10 @@ ATAC.counts.filt.Z <- scaleRows(ATAC.counts.df[boo,])
 peaks.filt <- peaks[boo,]
 
 if(TRUE){
-  findBest <- cluster::clusGap(ATAC.counts.filt.Z, FUN = kmeans, K.max = 15, B = 3, nstart = 2)
-  qplot(1:15,findBest$Tab[,3])
+  findBest <- cluster::clusGap(ATAC.counts.filt.Z, FUN = kmeans, K.max = 10, B = 3, nstart = 2)
+  qplot(1:10,findBest$Tab[,3])
   
-  df <- data.frame(K = 1:15, Gap = findBest$Tab[,3])
+  df <- data.frame(K = 1:10, Gap = findBest$Tab[,3])
   #saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
   df <- readRDS("../../processed/kmean-scree-atac.rds")
   p1 <- ggplot(df, aes(x = K, y = Gap)) + geom_point() +
