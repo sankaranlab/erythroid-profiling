@@ -26,19 +26,27 @@ lapply(list.files("../../downloads/ATAC_DESeq2/", full.names = TRUE), function(x
 
 boo <- peaks$V2 %in% diffPeakDf$start
 
-ATAC.counts.filt <- ATAC.counts.df[boo,]
+scaleRows <- function(x) {
+  rm <- rowMeans(x)
+  x <- sweep(x, 1, rm)
+  sx <- apply(x, 1, sd)
+  x <- sweep(x, 1, sx, "/")
+}
+
+ATAC.counts.filt.Z <- scaleRows(ATAC.counts.df[boo,])
 peaks.filt <- peaks[boo,]
 
 if(TRUE){
-  findBest <- cluster::clusGap(ATAC.counts.filt, FUN = kmeans, K.max = 15, B = 3, nstart = 2)
+  findBest <- cluster::clusGap(ATAC.counts.filt.Z, FUN = kmeans, K.max = 15, B = 3, nstart = 2)
   qplot(1:15,findBest$Tab[,3])
   
   df <- data.frame(K = 1:15, Gap = findBest$Tab[,3])
-  saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
+  #saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
+  df <- readRDS("../../processed/kmean-scree-atac.rds")
   p1 <- ggplot(df, aes(x = K, y = Gap)) + geom_point() +
     pretty_plot(fontsize = 8) + L_border() + labs(x = "K-means", y = "Gap Statistic") +
     geom_vline(xintercept = 7, linetype = 2) +
-    scale_x_continuous(breaks = c(2,4,6,8,10))
+    scale_x_continuous(breaks = c(2,4,6,8,10,12,14))
   
   cowplot::ggsave(p1, file = "../../plots/atacseq_kmeans_scree.pdf", width = 2.2, height =2)
 }
