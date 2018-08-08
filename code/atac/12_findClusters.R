@@ -31,10 +31,10 @@ peaks.filt <- peaks[boo,]
 
 if(TRUE){
   findBest <- cluster::clusGap(ATAC.counts.filt, FUN = kmeans, K.max = 15, B = 3, nstart = 2)
-  qplot(1:10,findBest$Tab[,3])
+  qplot(1:15,findBest$Tab[,3])
   
-  df <- data.frame(K = 1:10, Gap = findBest$Tab[,3])
-  saveRS(df, file = "../../processed/kmean-scree-atac.rds")
+  df <- data.frame(K = 1:15, Gap = findBest$Tab[,3])
+  saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
   p1 <- ggplot(df, aes(x = K, y = Gap)) + geom_point() +
     pretty_plot(fontsize = 8) + L_border() + labs(x = "K-means", y = "Gap Statistic") +
     geom_vline(xintercept = 7, linetype = 2) +
