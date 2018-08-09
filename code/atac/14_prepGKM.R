@@ -19,6 +19,7 @@ scaleRows <- function(x) {
 }
 
 # get quantiles for Z scores
+ATAC.counts.cpm <- sweep(ATAC.counts, 2, colSums(ATAC.counts), FUN="/") * 1000000
 ATAC.counts.filt.Z <- scaleRows(ATAC.counts)
 Qs <- apply(ATAC.counts.filt.Z,2,function(x) {quantile(x,0.90)})
 Ps <- paste0("P", as.character(1:8))
@@ -27,5 +28,6 @@ lapply(1:8, function(i){
   write.table(peaks[which(ATAC.counts.filt.Z[,i] > Qs[i]),], 
               file = paste0("../../processed/gkmerpeaks/topPeaks-", Ps[i], ".bed"),
               row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t") 
+  sum(ATAC.counts.filt.Z[,i] > Qs[i])
 })
 

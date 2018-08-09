@@ -2,7 +2,8 @@ library(gkmSVM)
 suppressMessages(suppressWarnings(library(tools)))
 
 do_gkmSVM <- function(pop){
-  genNullSeqs('../data/topPeaks-P1.bed',nMaxTrials=10,xfold=1,
+  genNullSeqs(paste0('../../processed/gkmerpeaks/topPeaks-',pop,'.bed'),
+              nMaxTrials=10,xfold=1,
               genomeVersion='hg19',
               outputPosFastaFN=paste0('../fasta/',pop,'-positive.fa'),
               outputBedFN=paste0('../fasta/',pop,'-negative.bed'),
