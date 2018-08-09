@@ -41,8 +41,8 @@ if(TRUE){
   qplot(1:10,findBest$Tab[,3])
   
   df <- data.frame(K = 1:10, Gap = findBest$Tab[,3])
-  #saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
-  df <- readRDS("../../processed/kmean-scree-atac.rds")
+  saveRDS(df, file = "../../processed/kmean-scree-atac.rds")
+  #df <- readRDS("../../processed/kmean-scree-atac.rds")
   p1 <- ggplot(df, aes(x = K, y = Gap)) + geom_point() +
     pretty_plot(fontsize = 8) + L_border() + labs(x = "K-means", y = "Gap Statistic") +
     geom_vline(xintercept = 7, linetype = 2) +
