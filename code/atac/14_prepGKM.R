@@ -20,7 +20,7 @@ scaleRows <- function(x) {
 
 # get quantiles for Z scores
 ATAC.counts.cpm <- sweep(ATAC.counts, 2, colSums(ATAC.counts), FUN="/") * 1000000
-ATAC.counts.filt.Z <- scaleRows(ATAC.counts)
+ATAC.counts.filt.Z <- scaleRows(ATAC.counts.cpm)
 Qs <- apply(ATAC.counts.filt.Z,2,function(x) {quantile(x,0.90)})
 Ps <- paste0("P", as.character(1:8))
 
