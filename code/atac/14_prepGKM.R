@@ -22,7 +22,7 @@ scaleRows <- function(x) {
 ATAC.counts.cpm <- sweep(ATAC.counts, 2, colSums(ATAC.counts), FUN="/") * 1000000
 
 ATAC.counts.filt.Z <- scaleRows(ATAC.counts.cpm)
-Qs <- apply(ATAC.counts.filt.Z,2,function(x) {quantile(x,0.90)})
+Qs <- apply(ATAC.counts.filt.Z,2,function(x) {quantile(x,0.80)})
 
 Ps <- paste0("P", as.character(1:8))
 

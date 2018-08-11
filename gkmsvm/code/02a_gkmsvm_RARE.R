@@ -3,21 +3,23 @@ library(GenomicRanges)
 library(BSgenome.Hsapiens.UCSC.hg19)
 library(gkmSVM)
 
-snps_df <- read.table("../../data/mendelianVariants.tsv", header = TRUE)
-pad <- 9
-
-# Make a GenomicRanges object of the regions of interest
-snps_df$start <- snps_df$BP - pad
-snps_df$end <- snps_df$BP + pad
-snps_gr <- makeGRangesFromDataFrame(snps_df, keep.extra.columns = TRUE)
-
-# Extract sequences from a reference genome
-sequence <- as.character(getSeq(BSgenome.Hsapiens.UCSC.hg19, snps_gr))
-
-# Annotate with the reference and the alternate alleles
-ref <-  paste0(substring(sequence, 1,9), snps_df$REF, substring(sequence, 11,19))
-alt <-  paste0(substring(sequence, 1,9), snps_df$ALT, substring(sequence, 11,19))
-names <- paste0(snps_df$CHR, ":", snps_df$BP, "_", snps_df$REF, "-", snps_df$ALT)
+if(FALSE){
+  snps_df <- read.table("../../data/mendelianVariants.tsv", header = TRUE)
+  pad <- 9
+  
+  # Make a GenomicRanges object of the regions of interest
+  snps_df$start <- snps_df$BP - pad
+  snps_df$end <- snps_df$BP + pad
+  snps_gr <- makeGRangesFromDataFrame(snps_df, keep.extra.columns = TRUE)
+  
+  # Extract sequences from a reference genome
+  sequence <- as.character(getSeq(BSgenome.Hsapiens.UCSC.hg19, snps_gr))
+  
+  # Annotate with the reference and the alternate alleles
+  ref <-  paste0(substring(sequence, 1,9), snps_df$REF, substring(sequence, 11,19))
+  alt <-  paste0(substring(sequence, 1,9), snps_df$ALT, substring(sequence, 11,19))
+  names <- paste0(snps_df$CHR, ":", snps_df$BP, "_", snps_df$REF, "-", snps_df$ALT)
+}
 
 if(FALSE){
   write.fasta(as.list(ref), names, "../fasta/mendelianRare_ref.fasta",

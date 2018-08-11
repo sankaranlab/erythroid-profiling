@@ -19,3 +19,4 @@ p1 <- ggplot(hemeGrid, aes(x = variant, y = variable, fill = value)) +
   theme(legend.position = "bottom") + L_border() + 
   theme(axis.text.x=element_text(angle=45, hjust=1))
 
+p1
