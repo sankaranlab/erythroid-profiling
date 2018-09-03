@@ -8,8 +8,6 @@ library(BuenColors)
 library(qvalue)
 "%ni%" <- Negate("%in%")
 
-setwd("/Users/erikbao/Documents/GitHub/ery-final/code/atac")
-
 # Load kmeans GWAS variants -----------------------------------------------
 
 # Fine-map variants PP>0.10

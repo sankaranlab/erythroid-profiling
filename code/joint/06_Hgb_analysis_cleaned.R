@@ -66,6 +66,8 @@ colnames(mega_df)[15:ncol(mega_df)] <- erytraits
 mega_df$meanP2_4 <- apply(mega_df[,paste0("P",seq(2,4))],1,mean)
 mega_df$meanP5_6 <- apply(mega_df[,paste0("P",seq(5,6))],1,mean)
 mega_df$FC <- log2(mega_df$meanP5_6  / mega_df$meanP2_4)
+#mega_df$FC <- log2(mega_df$P6  / mega_df$P4)
+
 
 # Overlap with finemapped variants
 CS.gr <- readRDS("../../data/UKBB_BC_v3_VEPannotations.rds")
@@ -85,9 +87,11 @@ hgb_variants <- foverlaps(CS.df,mega_df, nomatch = 0)  %>%
   distinct(var,.keep_all=TRUE)
 
 # HGB/HCT Volcano plot
-selected_vars <- c("6:135418632_TTAC_T","6:43742626_T_C","16:88858646_T_G")
+selected_vars <- c("6:43742626_T_C","6:43737805_A_C",
+                   "4:55408875_A_T","4:55408999_T_C",
+                   "1:3691528_A_G") #VEGFA, KIT, SMIM1
 hgb_variants$highlight<- "F"
-hgb_variants[hgb_variants$var %in% selected_vars,"highlight"] <- "T"
+#hgb_variants[hgb_variants$var %in% selected_vars,"highlight"] <- "T"
 
 p1 <-ggplot(hgb_variants, aes(x=FC, y=PP)) +
   geom_point(aes(color=highlight)) +
@@ -95,20 +99,22 @@ p1 <-ggplot(hgb_variants, aes(x=FC, y=PP)) +
   pretty_plot(fontsize = 10) + 
   L_border() + 
   geom_vline(xintercept = 0, linetype = 2) + 
-  labs(x="log2FC") + 
+  labs(x="log2FC",y="Posterior Probability") + 
   theme(legend.position="none")
 
 # ggExtra::ggMarginal(p1, type = "density",margins="x")
-# cowplot::ggsave(p1, file="../../plots/HGB_HCT_variants.pdf", width =3.5, height = 2.5)
+#cowplot::ggsave(p1, file="../../plots/HGB_HCT_variants.pdf", width =3.5, height = 2.5)
 
 # Weighted density plot
-d1 <- ggplot(hgb_variants, aes(FC)) +
+d1 <-ggplot(hgb_variants, aes(FC)) +
   geom_density(aes(weight=abs(FC)*PP/sum(abs(FC)*PP))) +
   pretty_plot(fontsize = 10)+
   L_border() +
   labs(x="")+
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0),limits=c(0,0.33)) +
   geom_vline(xintercept = 0, linetype = 2) 
-# cowplot::ggsave(d1, file="../../plots/HGB_HCT_variants_weighteddensity.pdf", width =3.5, height = 1)
+#cowplot::ggsave(d1, file="../../plots/HGB_HCT_variants_weighteddensity.pdf", width =3.5, height = 1)
 
 
 # MCV/MCH/MCHC/RETIC/RBC plots --------------------------------------------
@@ -119,10 +125,11 @@ mcv_variants <- foverlaps(CS.df,mega_df, nomatch = 0)  %>%
   distinct(var,.keep_all=TRUE)
 
 # Volcano plot
-selected_vars <- c("8:41630447_G_A","9:135860412_G_A","16:170076_G_C","11:94886632_T_C",
-                   "20:4157072_C_G")
+selected_vars <- c("19:12994618_C_T",
+                   "6:41924998_C_T","6:41925159_G_A",
+                   "16:170076_G_C") # KLF1, CCND3, HBA1
 mcv_variants$highlight<- "F"
-mcv_variants[mcv_variants$var %in% selected_vars,"highlight"] <- "T"
+#mcv_variants[mcv_variants$var %in% selected_vars,"highlight"] <- "T"
 p2 <-ggplot(mcv_variants, aes(x=FC, y=PP)) +
   geom_point(aes(color=highlight)) +
   scale_color_manual(values = jdb_palette("solar_extra")[c(1,7)]) +
@@ -130,16 +137,18 @@ p2 <-ggplot(mcv_variants, aes(x=FC, y=PP)) +
   L_border() + 
   theme(legend.position="none")+
   geom_vline(xintercept = 0, linetype = 2) + 
-  labs(x="log2FC") 
+  labs(x="log2FC",y="Posterior Probability") 
 
 #cowplot::ggsave(p2, file="../../plots/MCV_MCH_MCHC_RBC_variants.pdf", width =3.5, height = 2.5)
 
 # Weighted density
-d2 <-ggplot(mcv_variants, aes(FC)) +
+d2 <- ggplot(mcv_variants, aes(FC)) +
   geom_density(aes(weight=abs(FC)*PP/sum(abs(FC)*PP))) +
   pretty_plot(fontsize = 10)+
   L_border() +
   labs(x="log2FC")+
+  scale_x_continuous(expand = c(0, 0)) +
+  scale_y_continuous(expand = c(0, 0),limits=c(0,0.33)) +
   geom_vline(xintercept = 0, linetype = 2) 
 #cowplot::ggsave(d2, file="../../plots/MCV_MCH_MCHC_RBC_variants_weighteddensity.pdf", width =3.5, height = 1)
 

@@ -26,16 +26,20 @@ makePlot <- function(geneP){
   colorVec <- c("firebrick", "grey"); names(colorVec) <- c(geneP,  "zznone")
   p1 <- ggplot(go, aes(x = timepoint, y = log2FoldChange*-1, group = gene, color = interesting)) +
     pretty_plot(fontsize = 8) +
+    ggtitle(geneP)+
     geom_line(size = 0.25) + scale_color_manual(values = colorVec) + L_border() +
     labs(x = "", y = "log2FC over P1") + theme(legend.position = "none")
   
   #cowplot::ggsave(p1, file = paste0("../../plots/spaghetti-",geneP,".pdf"), width = 3, height = 2)
   return(p1)
 }
-makePlot("TMCC2")
-makePlot("GATA1")
-makePlot("IRF1")
-makePlot("EIF2AK1")
-makePlot("HBB")
+
+genes_to_plot <- c("UROS","RHAG")
+splots <- lapply(genes_to_plot, function(y) makePlot(y))
+pg <- cowplot::plot_grid(plotlist=splots,nrow=1,label_x="")
+pg
+
+makePlot("RHAG")
+
 
 
