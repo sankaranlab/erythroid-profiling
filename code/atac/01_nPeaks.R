@@ -5,8 +5,10 @@ library(ggbeeswarm)
 
 lapply(list.files("../../data/ATAC_data/summits/"), function(x){
   df <- fread(paste0("../../data/ATAC_data/summits/", x), header = TRUE)
-  data.frame(Population = stringr::str_split_fixed(x, "_", 4)[1,3], nPeaks = dim(df)[1])
-}) %>% rbindlist() %>% data.frame() -> peakDF
+  y <- stringr::str_split_fixed(x, "_", 4)
+  data.frame(Sample = gsub("_ATAC_summits.bed", "", paste0(y[1,3], "-", y[1,4])),
+    Population = stringr::str_split_fixed(x, "_", 4)[1,3], nPeaks = dim(df)[1])
+}) %>% rbindlist() %>% data.frame(stringsAsFactors = FALSE) %>% arrange(Sample) -> peakDF
 
 eryth_color_maps <- c("P1" = "#3b82ae", "P2" = "#547294", "P3" = "#6d617a", "P4" = "#865160", "P5" = "#9f4046", "P6" = "#b8302c", "P7" = "#d11f12", "P8" = "#de1705")
 

@@ -30,6 +30,9 @@ cpm <- sweep(raw, 2, colSums(raw), FUN="/") * 1000000
 ATAC.cpm.log2.all <- log2(cpm[, c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8)))] +1)
 ATAC.cpm.log2.all.mm.RBC <- t(apply(ATAC.cpm.log2.all[sh,], 1, function(x)(x-min(x))/(max(x)-min(x))))
 
+ov <- findOverlaps(gata1mutgr, peak_gr)
+data.frame(data.frame(gata1mutgr)[queryHits(ov),], ATAC.cpm.log2.all[subjectHits(ov),])
+
 pdf(file="../../plots/gata1_noncoding_peaks.pdf", width = 2, height = 2)  
 par(cex.main=0.8,mar=c(1,1,1,1))
 hm <- Heatmap(ATAC.cpm.log2.all.mm.RBC, col=as.character(jdb_palette("solar_rojos",type="continuous")),
