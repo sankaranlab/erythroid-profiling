@@ -5,7 +5,7 @@ library(BuenColors)
 lapply(list.files("../../processed/all_DEseq2/", pattern = "^P1_*"), function(x){
   df <- read.table(paste0("../../processed/all_DEseq2/", x), header = TRUE)
   df$timepoint <- stringr::str_split_fixed(x, "_", 3)[1,2]
-  df <- df[df$baseMean > 500,]
+  df <- df[df$baseMean > 25,]
   df[,c("gene", "log2FoldChange", "timepoint")]
 }) %>% rbindlist() %>% data.frame() -> allFC
 
@@ -39,7 +39,7 @@ splots <- lapply(genes_to_plot, function(y) makePlot(y))
 pg <- cowplot::plot_grid(plotlist=splots,nrow=1,label_x="")
 pg
 
-makePlot("RHAG")
+makePlot("HSPA2")
 
 
 
