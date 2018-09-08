@@ -50,5 +50,9 @@ makeGeneBarPlot("CCND3")
 makeGeneBarPlot("UROS")
 makeGeneBarPlot("RHAG")
 
+makeGeneBarPlot("KLF1")
+makeGeneBarPlot("KIT")
+makeGeneBarPlot("HBA1")
+makeGeneBarPlot("SMIM1")
 
 
