@@ -111,3 +111,12 @@ if(FALSE){
               file = "../../processed/RNAseq-Kmeans7-clusterID-allpops.tsv", 
               sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
 }
+pops_order <- c("HSC", "MPP", "CMP", "MEP", paste0("P", as.character(1:8)))
+head(RNA.counts.filt[,pops_order])
+
+all_df <- data.frame( read.table("../../processed/RNAseq-Kmeans7-clusterID-allpops.tsv", header = TRUE),
+                      round(RNA.counts.filt[,pops_order], 2))
+
+write.table(all_df,
+            file = "../../processed/RNA-seq_suppTable.tsv", 
+            sep = "\t", quote = FALSE, col.names = TRUE, row.names = FALSE)
