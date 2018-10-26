@@ -3,7 +3,6 @@ library(BuenColors)
 library(data.table)
 library(GenomicRanges)
 library(reshape2)
-library(ComplexHeatmap)
 library(matrixStats)
 library(SummarizedExperiment)
 library(Matrix)
@@ -25,7 +24,6 @@ library(ggrepel)
 peaksdf <- fread("../../data/ATAC_data/ery_only.bed")
 peaks <- makeGRangesFromDataFrame(peaksdf, seqnames = "V1", start.field = "V2", end.field = "V3")
 ukbb <- importBedScore(peaks, list.files("../../data/FMsnps/", full.names = TRUE, pattern = "*.bed$"))
-ukbb <- ukbb[keep,]
 
 ATAC.counts <- data.matrix(data.frame(data.table::fread("../../data/ATAC_data/ery_only.counts.tsv")))
 meta <- stringr::str_split_fixed(colnames(ATAC.counts), "_", 4)
@@ -44,6 +42,7 @@ if (TRUE){
   
   # Subset to only good peaks
   peaks <- peaks[keep,]
+  ukbb <- ukbb[keep,]
 }
 
 # Create objects for g-chromVAR
@@ -66,18 +65,49 @@ colnames(mega_df)[15:ncol(mega_df)] <- erytraits
 mega_df$meanP2_4 <- apply(mega_df[,paste0("P",seq(2,4))],1,mean)
 mega_df$meanP5_6 <- apply(mega_df[,paste0("P",seq(5,6))],1,mean)
 mega_df$FC <- log2(mega_df$meanP5_6  / mega_df$meanP2_4)
-#mega_df$FC <- log2(mega_df$P6  / mega_df$P4)
 
+mega_df<-as.data.table(mega_df)
+names(mega_df) <- c("chrom","j.start","j.end",names(mega_df)[4:ncol(mega_df)])
+setkey(setDT(mega_df), chrom, j.start, j.end)
 
 # Overlap with finemapped variants
 CS.gr <- readRDS("../../data/UKBB_BC_v3_VEPannotations.rds")
 CS.df <- CS.gr %>% as.data.frame() %>% as.data.table
 setkey(setDT(CS.df), seqnames, start, end)
 
-mega_df<-as.data.table(mega_df)
-names(mega_df) <- c("chrom","j.start","j.end",names(mega_df)[4:ncol(mega_df)])
-setkey(setDT(mega_df), chrom, j.start, j.end)
+# Barplot -----------------------------------------------------------------
+traits_to_plot <- c("HGB","HCT","MCV","MCH","RBC_COUNT","MCHC")
+ery_variants <- foverlaps(CS.df,mega_df, nomatch = 0)  %>%
+  dplyr::filter(trait %in% traits_to_plot) %>% 
+  dplyr::select(var,trait, seqnames, start,end,PP,meanP2_4,meanP5_6,FC)
 
+ery_variants$direction <- ifelse(ery_variants$FC > 0, "late accessible","early accessible")
+ery_variants_summed <- ery_variants %>%
+  group_by(trait,direction) %>%
+  dplyr::summarize(count=n()) %>% mutate(percent = count / sum(count))
+
+c1 <- ggplot(ery_variants_summed, aes(x=trait,y=count,group=trait)) +
+  geom_bar(stat="identity",aes(fill=direction),position = position_stack(reverse = TRUE)) +
+  pretty_plot(fontsize = 10) +
+  L_border() +
+  scale_y_continuous(expand=c(0,0))+
+  labs(x="",y="number of variants")+
+  scale_fill_manual(values = jdb_palette("Zissou")[c(2,4)]) +
+  geom_text(aes(label = count), 
+                position = position_stack(vjust = 0.5), size = 3)
+cowplot::ggsave(c1, file="../../plots/ery_variants_accessibility_counts.pdf", width =5, height = 2.5)
+
+# Percent barplot
+p1 <- ggplot(ery_variants_summed, aes(x=trait,y=percent,group=trait)) +
+  geom_bar(stat="identity",aes(fill=direction),position = position_stack(reverse = TRUE)) +
+  pretty_plot(fontsize = 10) +
+  L_border() +
+  scale_y_continuous(expand=c(0,0))+
+  labs(x="",y="number of variants")+
+  scale_fill_manual(values = jdb_palette("Zissou")[c(2,4)]) +
+  geom_text(aes(label = paste0(100*round(percent,2),"%")), 
+            position = position_stack(vjust = 0.5), size = 3)
+cowplot::ggsave(p1, file="../../plots/ery_variants_accessibility_percents.pdf", width =5, height = 2.5)
 
 # HGB/HCT plots -----------------------------------------------------------
 traits_to_plot <- c("HGB","HCT")
@@ -115,7 +145,6 @@ d1 <-ggplot(hgb_variants, aes(FC)) +
   scale_y_continuous(expand = c(0, 0),limits=c(0,0.33)) +
   geom_vline(xintercept = 0, linetype = 2) 
 #cowplot::ggsave(d1, file="../../plots/HGB_HCT_variants_weighteddensity.pdf", width =3.5, height = 1)
-
 
 # MCV/MCH/MCHC/RETIC/RBC plots --------------------------------------------
 traits_to_plot <- c("MCV","MCH","RBC_COUNT","MCHC")

@@ -8,8 +8,8 @@ library(annotables)
 register(MulticoreParam(2))
 
 # Import raw expression values
-ATAC.counts <- read.table("../../data/ATAC_data/combined_12.counts.tsv", header = TRUE)[,c(5:12)]
-peaks <- data.frame(fread("../../data/ATAC_data/ery_only.bed"))
+ATAC.counts <- read.table("../../data/ATAC_data/combined_12.counts.tsv", header = TRUE)
+peaks <- data.frame(fread("../../data/corces/panHeme.bed"))
 
 scaleRows <- function(x) {
   rm <- rowMeans(x)
@@ -24,11 +24,11 @@ ATAC.counts.cpm <- sweep(ATAC.counts, 2, colSums(ATAC.counts), FUN="/") * 100000
 ATAC.counts.filt.Z <- scaleRows(ATAC.counts.cpm)
 Qs <- apply(ATAC.counts.filt.Z,2,function(x) {quantile(x,0.80)})
 
-Ps <- paste0("P", as.character(1:8))
+pops <- colnames(ATAC.counts.filt.Z)
 
-lapply(1:8, function(i){
+lapply(1:ncol(ATAC.counts.filt.Z), function(i){
   write.table(peaks[which(ATAC.counts.filt.Z[,i] > Qs[i]),], 
-              file = paste0("../../processed/gkmerpeaks/topPeaks-", Ps[i], ".bed"),
+              file = paste0("../../data/gkmerpeaks/topPeaks-", pops[i], ".bed"),
               row.names = FALSE, col.names = FALSE, quote = FALSE, sep = "\t") 
   sum(ATAC.counts.filt.Z[,i] > Qs[i])
 })
