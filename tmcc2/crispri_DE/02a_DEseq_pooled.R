@@ -9,7 +9,7 @@ register(MulticoreParam(2))
 raw <- read.table("output/TMCC2-RNAseq_rawGeneCounts.tsv", header = TRUE)
 RNA.counts <- raw[,1:7]
 genes <- raw[,8]
-meta <- data.frame(gRNA = c("NC", "NC", "NC", "g1", "g1", "g2", "g2"))
+meta <- data.frame(gRNA = c("NC", "NC", "NC", rep("g-pooled", 4)))
 
 # RNA DEseq2 setup
 RNA.counts.df <- as.data.frame(RNA.counts)
@@ -25,8 +25,8 @@ RNA.dds <- DESeq(RNA.dds, parallel = TRUE)
 
 # All pairwise comparisons
 comp <- data.frame(
-  Var1 = c("g1", "g1", "g2"),
-  Var2 = c("NC", "g2", "NC"), stringsAsFactors = FALSE
+  Var1 = c("g-pooled"),
+  Var2 = c("NC"), stringsAsFactors = FALSE
 )
 comp$cond <- "RNA.condition"
 comp <- comp %>% 
@@ -46,7 +46,7 @@ sig.pairwise <- function(x) {
   out$log2FoldChange <- round( out$log2FoldChange, 4)
   out$pvalue <-sprintf("%.9e", out$pvalue)
   out$padj <-sprintf("%.3e", out$padj)
-   
+  
   # Output table
   write.table(out[,c("gene", "baseMean", "log2FoldChange", "pvalue", "padj")],
               file = paste0("output/RNAseq-", comp[x,4], "_Padj01.tsv"), 
