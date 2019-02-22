@@ -19,7 +19,8 @@ p1 <- ggplot(qPCR_df_plot, aes(x = shRNA, y = mean, fill = shRNA)) +
   geom_errorbar(aes(ymin=mean, ymax=mean+sd), width=.2,
                 position=position_dodge(.9)) +
   scale_fill_manual(values = c("shluc" = "black", "sh2" = "orange3", "sh1" = "firebrick")) + L_border() +
-  labs(x = "", y = "Relative Expression") + theme(legend.position = "none")
+  labs(x = "", y = "Relative Expression") + theme(legend.position = "none") + 
+  scale_y_continuous(expand = c(0,0))
 
 # 2) growth data
 growth_df <- data.frame(
@@ -36,10 +37,12 @@ growth_df_plot$shRNA <- factor(as.character(growth_df_plot$shRNA), c("shluc", "s
 p2 <- ggplot(growth_df_plot, aes(x = day, y = mean, color = shRNA, group = shRNA)) +
   pretty_plot(fontsize = 8) +
   geom_line() +
-  geom_point() +
+  geom_point(size = 0.5) +
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1) +
   scale_color_manual(values = c("shluc" = "black", "sh2" = "orange3", "sh1" = "firebrick")) + L_border() +
-  labs(x = "", y = "Fold Expansion") + theme(legend.position = "none") 
+  labs(x = "", y = "Fold Expansion") + theme(legend.position = "none")  +
+  scale_y_continuous(expand = c(0,0), limits = c(0.8,2.5), breaks = c(1,1.5,2)) +
+  geom_hline(yintercept = 1, linetype = 2)
 
 # 3) qPCR data
 ann_df <- data.frame(
@@ -59,9 +62,10 @@ p3 <- ggplot(ann_df_plot, aes(x = shRNA, y = mean, fill = shRNA)) +
   geom_errorbar(aes(ymin=mean, ymax=mean+sd), width=.2,
                 position=position_dodge(.9)) +
   scale_fill_manual(values = c("shluc" = "black", "sh2" = "orange3", "sh1" = "firebrick")) + L_border() +
-  labs(x = "", y = "AnnexinV+ %") + theme(legend.position = "none")
+  labs(x = "", y = "AnnexinV+ %") + theme(legend.position = "none") +
+  scale_y_continuous(expand = c(0,0))
 
 
-cowplot::ggsave(cowplot::plot_grid(p1, p2, p3, nrow = 1),
-                file = "threePanels.pdf", width = 6.3, height = 2)
+cowplot::ggsave(cowplot::plot_grid(p1, p2, p3, nrow = 3),
+                file = "threePanels.pdf", width = 1.3, height = 3.7)
 
