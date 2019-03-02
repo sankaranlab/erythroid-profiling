@@ -54,5 +54,7 @@ makeGeneBarPlot("KLF1")
 makeGeneBarPlot("KIT")
 makeGeneBarPlot("HBA1")
 makeGeneBarPlot("SMIM1")
+makeGeneBarPlot("NFE2")
+makeGeneBarPlot("HBB")
 
 

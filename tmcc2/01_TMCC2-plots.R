@@ -41,7 +41,7 @@ p2 <- ggplot(growth_df_plot, aes(x = day, y = mean, color = shRNA, group = shRNA
   geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.1) +
   scale_color_manual(values = c("shluc" = "black", "sh2" = "orange3", "sh1" = "firebrick")) + L_border() +
   labs(x = "", y = "Fold Expansion") + theme(legend.position = "none")  +
-  scale_y_continuous(expand = c(0,0), limits = c(0.8,2.5), breaks = c(1,1.5,2)) +
+  scale_y_continuous(expand = c(0,0), limits = c(0.8,2.5), breaks = c(1,1.5,2, 2.5)) +
   geom_hline(yintercept = 1, linetype = 2)
 
 # 3) qPCR data
