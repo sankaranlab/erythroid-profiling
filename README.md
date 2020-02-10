@@ -6,6 +6,6 @@ Raw data repository is available [at this GEO Superseries](https://www.ncbi.nlm.
 
 ### Contact
 - [Leif Ludwig](mailto:ludwig@broadinstitute.org)
-- [Vijay Sankaran](mailto:sankran@broadinstitute.org)
+- [Vijay Sankaran](mailto:sankaran@broadinstitute.org)
 
 <br><br>
